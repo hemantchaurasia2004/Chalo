@@ -1,35 +1,37 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { IconBuilding, IconWhatsapp, IconScale, IconHandshake } from "./Icons";
+import { ReactNode } from "react";
 
-const reasons = [
+const reasons: { icon: ReactNode; title: string; description: string; accent: string; iconColor: string }[] = [
   {
-    icon: "🏫",
-    title: "Built for campuses",
-    description: "Designed specifically for college environments where big apps don't reach.",
-    accent: "bg-blue-50 border-blue-100",
-    iconBg: "bg-blue-100",
+    icon: <IconBuilding className="w-5 h-5" />,
+    title: "Designed for campuses",
+    description: "Purpose-built for the unique geography and patterns of college areas where mainstream apps fail.",
+    accent: "bg-blue-50/80 border-blue-100",
+    iconColor: "text-blue-600 bg-blue-100",
   },
   {
-    icon: "💬",
+    icon: <IconWhatsapp className="w-5 h-5" />,
     title: "Works on WhatsApp",
-    description: "No new app to download. Use what you already have — WhatsApp.",
-    accent: "bg-emerald-50 border-emerald-100",
-    iconBg: "bg-emerald-100",
+    description: "Zero friction. No app download, no sign-up. Students use what they already have.",
+    accent: "bg-emerald-50/80 border-emerald-100",
+    iconColor: "text-emerald-600 bg-emerald-100",
   },
   {
-    icon: "⚖️",
+    icon: <IconScale className="w-5 h-5" />,
     title: "Fair pricing via bidding",
-    description: "Drivers compete on price. You always get the best deal.",
-    accent: "bg-violet-50 border-violet-100",
-    iconBg: "bg-violet-100",
+    description: "Drivers compete on price transparently. No hidden charges, no surge pricing.",
+    accent: "bg-violet-50/80 border-violet-100",
+    iconColor: "text-violet-600 bg-violet-100",
   },
   {
-    icon: "🤝",
-    title: "Better for everyone",
-    description: "Students save money, drivers get guaranteed rides. Win-win.",
-    accent: "bg-amber-50 border-amber-100",
-    iconBg: "bg-amber-100",
+    icon: <IconHandshake className="w-5 h-5" />,
+    title: "Win-win for both sides",
+    description: "Students get reliable, affordable rides. Drivers get guaranteed earnings. No one loses.",
+    accent: "bg-amber-50/80 border-amber-100",
+    iconColor: "text-amber-600 bg-amber-100",
   },
 ];
 
@@ -78,13 +80,13 @@ export default function WhyChalo() {
               className={`p-6 sm:p-7 rounded-2xl ${r.accent} border
                          hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}
             >
-              <div className={`w-12 h-12 rounded-xl ${r.iconBg} flex items-center justify-center text-2xl mb-4`}>
+              <div className={`w-10 h-10 rounded-lg ${r.iconColor} flex items-center justify-center mb-4`}>
                 {r.icon}
               </div>
-              <h3 className="text-lg font-bold text-chalo-navy mb-2">
+              <h3 className="text-base font-bold text-chalo-navy mb-2">
                 {r.title}
               </h3>
-              <p className="text-sm text-chalo-slate/70 leading-relaxed">
+              <p className="text-sm text-chalo-slate/65 leading-relaxed">
                 {r.description}
               </p>
             </motion.div>

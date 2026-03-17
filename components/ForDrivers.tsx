@@ -1,12 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { IconXCircle, IconCheckCircle, IconBanknote, IconTarget } from "./Icons";
+import { ReactNode } from "react";
 
-const benefits = [
-  { icon: "🚫", title: "No fake bookings", description: "Students pay a small advance upfront — only serious riders." },
-  { icon: "✅", title: "Guaranteed rides", description: "Every accepted bid is a confirmed ride. No more cancellations." },
-  { icon: "💵", title: "More daily earnings", description: "Spend less time waiting and more time driving." },
-  { icon: "🎯", title: "No wasted trips", description: "No more arriving to find the student has already left." },
+const benefits: { icon: ReactNode; title: string; description: string }[] = [
+  { icon: <IconXCircle className="w-5 h-5" />, title: "No fake bookings", description: "Students pay a small advance upfront. Only serious riders make it through." },
+  { icon: <IconCheckCircle className="w-5 h-5" />, title: "Guaranteed rides", description: "Every accepted bid is a locked-in ride. No more last-minute cancellations." },
+  { icon: <IconBanknote className="w-5 h-5" />, title: "Higher daily earnings", description: "Less time waiting, more time driving. Optimized demand means more trips per day." },
+  { icon: <IconTarget className="w-5 h-5" />, title: "Zero wasted trips", description: "No more arriving at a pickup to find the student already gone." },
 ];
 
 const container = {
@@ -21,8 +23,8 @@ const item = {
 
 export default function ForDrivers() {
   return (
-    <section className="py-24 sm:py-32 bg-gradient-to-b from-amber-50/50 to-chalo-bg relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
+    <section className="py-24 sm:py-32 bg-gradient-to-b from-amber-50/40 to-chalo-bg relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-200/60 to-transparent" />
 
       <div className="max-w-5xl mx-auto px-6">
         <motion.div
@@ -32,11 +34,11 @@ export default function ForDrivers() {
           transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
-          <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-200 mb-4">
+          <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 mb-4">
             For drivers
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-chalo-navy">
-            Better for Drivers too
+            Better for Drivers Too
           </h2>
           <p className="mt-4 text-chalo-slate/60 max-w-lg mx-auto">
             Chalo isn&apos;t just for students. Drivers earn more with zero wasted effort.
@@ -54,17 +56,17 @@ export default function ForDrivers() {
             <motion.div
               key={b.title}
               variants={item}
-              className="flex gap-5 p-6 sm:p-7 rounded-2xl bg-white border border-amber-100
+              className="flex gap-5 p-6 sm:p-7 rounded-2xl bg-white border border-amber-100/80
                          hover:border-amber-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
             >
-              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-2xl flex-shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
                 {b.icon}
               </div>
               <div>
-                <h3 className="text-lg font-bold text-chalo-navy mb-1.5">
+                <h3 className="text-base font-bold text-chalo-navy mb-1.5">
                   {b.title}
                 </h3>
-                <p className="text-sm text-chalo-slate/70 leading-relaxed">
+                <p className="text-sm text-chalo-slate/65 leading-relaxed">
                   {b.description}
                 </p>
               </div>

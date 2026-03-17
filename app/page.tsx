@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import StorySection from "@/components/StorySection";
 import ProblemSection from "@/components/ProblemSection";
+import GroundSurvey from "@/components/GroundSurvey";
 import SolutionSection from "@/components/SolutionSection";
 import WhyChalo from "@/components/WhyChalo";
 import ForDrivers from "@/components/ForDrivers";
@@ -16,6 +17,7 @@ export default function Home() {
       <Hero />
       <StorySection />
       <ProblemSection />
+      <GroundSurvey />
       <SolutionSection />
       <WhyChalo />
       <ForDrivers />
