@@ -1,0 +1,48 @@
+.admin-theme {
+  color-scheme: dark;
+}
+
+.admin-theme::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.admin-theme::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.admin-theme::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+.admin-theme::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+/* Ensure the dark scrollbar applies to any scrollable child inside the admin theme */
+.admin-theme *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.admin-theme *::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.admin-theme *::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+.admin-theme *::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

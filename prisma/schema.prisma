@@ -1,0 +1,419 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum driver_status_enum {
+  OFFLINE
+  ONLINE
+  INACTIVE
+  SUSPENDED
+}
+
+enum onboarding_status_enum {
+  SUBMITTED
+  UNDER_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+enum kyc_status_enum {
+  PENDING
+  AUTO_VERIFIED
+  MANUAL_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+enum ride_status_enum {
+  CREATED
+  BIDDING
+  DRIVER_ASSIGNED
+  CONFIRMED
+  ONGOING
+  COMPLETED
+  CANCELLED
+  NO_DRIVERS
+  DISPUTED
+  EXPIRED
+}
+
+enum payment_status_enum {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum refund_status_enum {
+  NONE
+  PENDING
+  REFUNDED
+}
+
+enum settlement_status_enum {
+  UNSETTLED
+  SETTLED
+}
+
+enum payout_status_enum {
+  INITIATED
+  PROCESSING
+  SUCCESS
+  FAILED
+  REVERSED
+}
+
+enum doc_type_enum {
+  AADHAAR_QR
+  DRIVING_LICENSE
+  UPI_QR
+  BANK_PROOF
+  PROFILE_PHOTO
+  OTHER
+}
+
+enum account_type_enum {
+  UPI
+  BANK
+}
+
+model Campus {
+  id         String   @id @default(uuid())
+  code       String   @unique @db.Citext
+  name       String
+  created_at DateTime @default(now())
+
+  students Student[]
+
+  @@map("campuses")
+}
+
+model Student {
+  id         String   @id @default(uuid())
+  phone      String   @unique @db.VarChar(20)
+  campus_id  String?
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  campus Campus? @relation(fields: [campus_id], references: [id])
+  rides  Ride[]
+
+  @@map("students")
+}
+
+model Driver {
+  id                      String                 @id @default(uuid())
+  name                    String?
+  phone                   String                 @unique @db.VarChar(20)
+  vehicle_number          String                 @unique @db.VarChar(20)
+  rating                  Decimal                @default(5.0) @db.Decimal(2, 1)
+  status                  driver_status_enum     @default(INACTIVE)
+  
+  rides_today             Int                    @default(0)
+  total_ratings           Int                    @default(0)
+  driver_cancel_count     Int                    @default(0)
+  
+  address_line1           String?
+  address_line2           String?
+  city                    String?
+  state                   String?
+  pincode                 String?                @db.VarChar(10)
+  
+  onboarding_status       onboarding_status_enum @default(SUBMITTED)
+  onboarding_submitted_at DateTime               @default(now())
+  approved_at             DateTime?
+  rejected_at             DateTime?
+  rejection_reason        String?
+  
+  created_at              DateTime               @default(now())
+  updated_at              DateTime               @default(now())
+
+  kyc             DriverKyc?
+  documents       DriverDocument[]
+  payout_accounts DriverPayoutAccount[]
+  rides           Ride[]
+  bids            RideBid[]
+  earnings        DriverRideEarning[]
+  payouts         Payout[]
+  otp_challenges  DriverOtpChallenge[]
+  sessions        DriverSession[]
+
+  @@map("drivers")
+}
+
+model DriverKyc {
+  id                        String           @id @default(uuid())
+  driver_id                 String           @unique
+  
+  aadhaar_last4             String?          @db.Char(4)
+  aadhaar_hash              String?          @db.Char(64)
+  aadhaar_number_encrypted  String?
+  aadhaar_qr_parsed_name    String?
+  aadhaar_qr_parsed_dob     DateTime?        @db.Date
+  aadhaar_qr_parsed_address String?
+  aadhaar_qr_verified       Boolean          @default(false)
+  
+  driving_license_number    String?          @db.VarChar(30)
+  driving_license_expiry    DateTime?        @db.Date
+  driving_license_verified  Boolean          @default(false)
+  
+  vehicle_rc_number         String?          @db.VarChar(30)
+  vehicle_verified          Boolean          @default(false)
+  
+  kyc_status                kyc_status_enum  @default(PENDING)
+  auto_check_score          Int?
+  verifier_notes            String?
+  verified_by               String?
+  verified_at               DateTime?
+  
+  created_at                DateTime         @default(now())
+  updated_at                DateTime         @default(now())
+
+  driver Driver @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+
+  @@map("driver_kyc")
+}
+
+model DriverDocument {
+  id              String        @id @default(uuid())
+  driver_id       String
+  doc_type        doc_type_enum
+  storage_url     String
+  file_sha256     String?       @db.Char(64)
+  mime_type       String?
+  uploaded_at     DateTime      @default(now())
+  verified        Boolean       @default(false)
+  rejected_reason String?
+
+  driver          Driver                @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+  payout_accounts DriverPayoutAccount[]
+
+  @@index([driver_id], name: "idx_driver_documents_driver_id")
+  @@unique([driver_id, doc_type])
+  @@map("driver_documents")
+}
+
+model DriverPayoutAccount {
+  id                       String           @id @default(uuid())
+  driver_id                String
+  account_type             account_type_enum
+  upi_id                   String?
+  account_holder_name      String?
+  bank_name                String?
+  account_number_encrypted String?
+  ifsc_code                String?          @db.VarChar(15)
+  upi_qr_document_id       String?
+  is_primary               Boolean          @default(true)
+  is_verified              Boolean          @default(false)
+  
+  created_at               DateTime         @default(now())
+  updated_at               DateTime         @default(now())
+
+  driver   Driver          @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+  document DriverDocument? @relation(fields: [upi_qr_document_id], references: [id])
+  payouts  Payout[]
+
+  @@index([driver_id], name: "idx_driver_payout_accounts_driver_id")
+  @@map("driver_payout_accounts")
+}
+
+model Ride {
+  id             String           @id @default(uuid())
+  student_id     String
+  driver_id      String?
+  pickup         String?
+  destination    String
+  price          Decimal?         @db.Decimal(10, 2)
+  status         ride_status_enum @default(CREATED)
+  
+  completion_otp String?          @db.Char(4)
+  cancel_reason  String?
+  cancelled_at   DateTime?
+  
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @default(now())
+
+  student Student            @relation(fields: [student_id], references: [id])
+  driver  Driver?            @relation(fields: [driver_id], references: [id])
+  bids    RideBid[]
+  payment Payment?
+  earning DriverRideEarning?
+
+  @@index([student_id], name: "idx_rides_student_id")
+  @@index([driver_id], name: "idx_rides_driver_id")
+  @@index([status, created_at(sort: Desc)], name: "idx_rides_status_created_at")
+  @@map("rides")
+}
+
+model RideBid {
+  id         String   @id @default(uuid())
+  ride_id    String
+  driver_id  String
+  bid_price  Decimal  @db.Decimal(10, 2)
+  timestamp  DateTime @default(now())
+
+  ride   Ride   @relation(fields: [ride_id], references: [id], onDelete: Cascade)
+  driver Driver @relation(fields: [driver_id], references: [id])
+
+  @@unique([ride_id, driver_id])
+  @@index([ride_id], name: "idx_ride_bids_ride_id")
+  @@map("ride_bids")
+}
+
+model Payment {
+  id             String              @id @default(uuid())
+  ride_id        String              @unique
+  amount         Decimal             @db.Decimal(10, 2)
+  payment_status payment_status_enum @default(PENDING)
+  refund_status  refund_status_enum  @default(NONE)
+  transaction_id String?             @unique
+  provider_ref   String?
+  paid_at        DateTime?
+  created_at     DateTime            @default(now())
+  updated_at     DateTime            @default(now())
+
+  ride Ride @relation(fields: [ride_id], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model DriverRideEarning {
+  id                String                 @id @default(uuid())
+  ride_id           String                 @unique
+  driver_id         String
+  gross_amount      Decimal                @db.Decimal(10, 2)
+  platform_fee      Decimal                @default(0) @db.Decimal(10, 2)
+  net_amount        Decimal                @db.Decimal(10, 2)
+  settlement_status settlement_status_enum @default(UNSETTLED)
+  settled_at        DateTime?
+  created_at        DateTime               @default(now())
+
+  ride        Ride        @relation(fields: [ride_id], references: [id])
+  driver      Driver      @relation(fields: [driver_id], references: [id])
+  payout_item PayoutItem?
+
+  @@index([driver_id], name: "idx_driver_ride_earnings_driver_id")
+  @@map("driver_ride_earnings")
+}
+
+model Payout {
+  id                 String             @id @default(uuid())
+  driver_id          String
+  payout_account_id  String?
+  amount             Decimal            @db.Decimal(10, 2)
+  status             payout_status_enum @default(INITIATED)
+  transaction_ref    String?            @unique
+  initiated_at       DateTime           @default(now())
+  processed_at       DateTime?
+  failure_reason     String?
+
+  driver  Driver               @relation(fields: [driver_id], references: [id])
+  account DriverPayoutAccount? @relation(fields: [payout_account_id], references: [id])
+  items   PayoutItem[]
+
+  @@index([driver_id], name: "idx_payouts_driver_id")
+  @@map("payouts")
+}
+
+model PayoutItem {
+  payout_id              String
+  driver_ride_earning_id String @unique
+
+  payout  Payout            @relation(fields: [payout_id], references: [id], onDelete: Cascade)
+  earning DriverRideEarning @relation(fields: [driver_ride_earning_id], references: [id])
+
+  @@id([payout_id, driver_ride_earning_id])
+  @@map("payout_items")
+}
+
+model DriverOtpChallenge {
+  id          String    @id @default(uuid())
+  driver_id   String
+  otp_hash    String    @db.Char(64)
+  expires_at  DateTime
+  verified_at DateTime?
+  attempts    Int       @default(0)
+  created_at  DateTime  @default(now())
+
+  driver Driver @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+
+  @@index([driver_id], name: "idx_driver_otp_driver_id")
+  @@map("driver_otp_challenges")
+}
+
+model DriverSession {
+  id         String    @id @default(uuid())
+  driver_id  String
+  token_jti  String    @unique
+  issued_at  DateTime  @default(now())
+  expires_at DateTime
+  revoked_at DateTime?
+
+  driver Driver @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+
+  @@index([driver_id], name: "idx_driver_sessions_driver_id")
+  @@map("driver_sessions")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actor_type  String
+  actor_id    String?
+  action      String
+  entity_type String
+  entity_id   String?
+  metadata    Json     @default("{}")
+  created_at  DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model WebhookEvent {
+  id                String    @id @default(uuid())
+  source            String
+  external_event_id String?
+  payload           Json
+  processed         Boolean   @default(false)
+  processed_at      DateTime?
+  created_at        DateTime  @default(now())
+
+  @@unique([source, external_event_id])
+  @@map("webhook_events")
+}
+model SystemSetting {
+  id         String   @id @default(uuid())
+  key        String   @unique
+  value      String
+  updated_at DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+
+
+model RouteMap {
+  id               String   @id @default(uuid())
+  pickup           String
+  destination      String
+  base_price       Decimal  @db.Decimal(10, 2)
+  estimated_km     Decimal  @db.Decimal(10, 2)
+  actual_avg_price Decimal? @db.Decimal(10, 2)
+  ride_count       Int      @default(0)
+  is_active        Boolean  @default(true)
+
+  // UI Enhancements
+  is_popular       Boolean  @default(false)
+  sort_order       Int      @default(0)
+  tag              String?
+
+  created_at       DateTime @default(now())
+  updated_at       DateTime @default(now()) @updatedAt
+
+  @@unique([pickup, destination])
+  @@map("route_maps")
+}
